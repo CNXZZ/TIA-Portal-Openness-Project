@@ -53,6 +53,9 @@ using DryIoc;
 using System.Collections.ObjectModel;
 using TIA程序生成.Properties;
 using Serilog;
+using Siemens.Engineering.HmiUnified;
+using Siemens.Engineering.HmiUnified.HmiTags;
+using Siemens.Engineering.HmiUnified.HmiConnections;
 
 namespace TIA程序生成.Common.Interfaces
 {
@@ -598,6 +601,7 @@ namespace TIA程序生成.Common.Interfaces
 
             try
             {
+                // 获取项目中的第一个HMI对象
                 HmiSoftware hmiSoftware = FindFirstHmiSoftware(projectTIA);
                 if (hmiSoftware == null)
                 {
@@ -667,8 +671,9 @@ namespace TIA程序生成.Common.Interfaces
 
             foreach (Device device in project.Devices)
             {
-                foreach (DeviceItem deviceItem in EnumerateDeviceItems(device?.Items))
+                foreach (DeviceItem deviceItem in EnumerateDeviceItems(device?.DeviceItems))
                 {
+                    //获取HMI目标
                     SoftwareContainer softwareContainer = ((IEngineeringServiceProvider)deviceItem).GetService<SoftwareContainer>();
                     if (softwareContainer?.Software is HmiSoftware hmiSoftware)
                     {
@@ -690,13 +695,13 @@ namespace TIA程序生成.Common.Interfaces
             foreach (DeviceItem item in rootComposition)
             {
                 yield return item;
-                foreach (DeviceItem child in EnumerateDeviceItems(item?.Items))
+                foreach (DeviceItem child in EnumerateDeviceItems(item?.DeviceItems))
                 {
                     yield return child;
                 }
             }
         }
-
+        // 通过反射获取工程对象的组成部分（如Tags、Connections等），以便进行后续操作。
         private static IEngineeringComposition GetEngineeringComposition(object owner, string propertyName)
         {
             if (owner == null || string.IsNullOrWhiteSpace(propertyName))
