@@ -209,5 +209,40 @@ namespace TIA程序生成.Common.Models
             get { return TransitiondecValue; }
             set { TransitiondecValue = value; OnPropertyChanged(); }
         }
+
+        private ObservableCollection<HmiTagEditItem> hmiTags;
+        public ObservableCollection<HmiTagEditItem> HmiTags
+        {
+            get { return hmiTags; }
+            set { hmiTags = value; OnPropertyChanged(); }
+        }
+
+        private string hmiTagName;
+        public string HmiTagName
+        {
+            get { return hmiTagName; }
+            set { hmiTagName = value; OnPropertyChanged(); }
+        }
+
+        private string hmiTagDataType = "Bool";
+        public string HmiTagDataType
+        {
+            get { return hmiTagDataType; }
+            set { hmiTagDataType = value; OnPropertyChanged(); }
+        }
+
+        private string hmiTagAddress;
+        public string HmiTagAddress
+        {
+            get { return hmiTagAddress; }
+            set { hmiTagAddress = value; OnPropertyChanged(); }
+        }
+
+        private string hmiAcquisitionCycle = "100 ms";
+        public string HmiAcquisitionCycle
+        {
+            get { return hmiAcquisitionCycle; }
+            set { hmiAcquisitionCycle = value; OnPropertyChanged(); }
+        }
     }
 }

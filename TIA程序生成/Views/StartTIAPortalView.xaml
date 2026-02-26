@@ -448,6 +448,59 @@
                                 </StackPanel>
                             </StackPanel>
                         </TabItem>
+                        <TabItem>
+                            <TabItem.Header>
+                                <StackPanel
+                                    Width="auto"
+                                    Height="auto"
+                                    ToolTip="HMI变量编辑（第一阶段)">
+                                    <materialDesign:PackIcon
+                                        Width="24"
+                                        Height="24"
+                                        HorizontalAlignment="Center"
+                                        Kind="TagPlus" />
+                                </StackPanel>
+                            </TabItem.Header>
+                            <StackPanel Margin="8">
+                                <TextBlock Margin="5" FontWeight="Bold" Text="HMI变量编辑（第一阶段）" />
+                                <DockPanel Margin="5" LastChildFill="False">
+                                    <TextBlock VerticalAlignment="Center" FontWeight="Bold" Text="变量名：" />
+                                    <TextBox Width="130" Margin="8,0,0,0" Text="{Binding StartTIAPortalModel.HmiTagName}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="类型：" />
+                                    <ComboBox Width="90" Margin="8,0,0,0" Text="{Binding StartTIAPortalModel.HmiTagDataType}">
+                                        <ComboBoxItem Content="Bool" />
+                                        <ComboBoxItem Content="Int" />
+                                        <ComboBoxItem Content="DInt" />
+                                        <ComboBoxItem Content="Real" />
+                                        <ComboBoxItem Content="String" />
+                                    </ComboBox>
+                                </DockPanel>
+                                <DockPanel Margin="5" LastChildFill="False">
+                                    <TextBlock VerticalAlignment="Center" FontWeight="Bold" Text="地址：" />
+                                    <TextBox Width="130" Margin="8,0,0,0" Text="{Binding StartTIAPortalModel.HmiTagAddress}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="采样周期：" />
+                                    <TextBox Width="90" Margin="8,0,0,0" Text="{Binding StartTIAPortalModel.HmiAcquisitionCycle}" />
+                                </DockPanel>
+                                <WrapPanel Margin="5">
+                                    <Button Margin="0,0,8,0" Command="{Binding ExecuteCommand}" CommandParameter="AddHmiTagItem" Content="添加到列表" />
+                                    <Button Margin="0,0,8,0" Command="{Binding ExecuteCommand}" CommandParameter="CreateOrUpdateHmiTags" Content="执行变量编辑" />
+                                    <Button Command="{Binding ExecuteCommand}" CommandParameter="ClearHmiTagItems" Content="清空列表" />
+                                </WrapPanel>
+                                <DataGrid
+                                    Margin="5"
+                                    AutoGenerateColumns="False"
+                                    CanUserAddRows="False"
+                                    Height="160"
+                                    ItemsSource="{Binding StartTIAPortalModel.HmiTags}">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Binding="{Binding TagName}" Header="变量名" Width="*" />
+                                        <DataGridTextColumn Binding="{Binding DataType}" Header="数据类型" Width="90" />
+                                        <DataGridTextColumn Binding="{Binding Address}" Header="地址" Width="120" />
+                                        <DataGridTextColumn Binding="{Binding AcquisitionCycle}" Header="采样周期" Width="90" />
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </StackPanel>
+                        </TabItem>
                     </TabControl>
                 </materialDesign:Card>
             </StackPanel>
