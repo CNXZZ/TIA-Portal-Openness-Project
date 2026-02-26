@@ -576,7 +576,7 @@ namespace TIA程序生成.Common.Interfaces
         }
 
         /// <summary>
-        /// 第一阶段：创建/更新HMI变量（基础版）。
+        /// 创建/更新HMI变量，并绑定到PLC变量。
         /// </summary>
         public string CreateOrUpdateHmiTags(IEnumerable<HmiTagEditItem> tags)
         {
@@ -598,10 +598,23 @@ namespace TIA程序生成.Common.Interfaces
 
             try
             {
+                HmiSoftware hmiSoftware = FindFirstHmiSoftware(projectTIA);
+                if (hmiSoftware == null)
+                {
+                    return "当前项目中未找到HMI设备，请先添加WinCC HMI设备后重试。";
+                }
+
+                IEngineeringComposition hmiTagComposition = GetEngineeringComposition(hmiSoftware, "Tags");
+                if (hmiTagComposition == null)
+                {
+                    return "未找到HMI变量集合，无法执行变量写入。";
+                }
+
+                IEngineeringComposition hmiConnectionComposition = GetEngineeringComposition(hmiSoftware, "Connections");
+
                 int createdOrUpdatedCount = 0;
                 foreach (var tag in validTags)
                 {
-                    // 当前阶段先完成参数校验和任务编排，后续可在这里接入具体HMI设备对象。
                     if (tag.TagName.Any(char.IsWhiteSpace))
                     {
                         return $"HMI变量名'{tag.TagName}'包含空白字符，请修改后重试。";
@@ -622,17 +635,163 @@ namespace TIA程序生成.Common.Interfaces
                         return $"HMI变量'{tag.TagName}'绑定PLC变量格式不正确，示例：DB1.StartCmd。";
                     }
 
-                    Log.Information($"HMI变量[{tag.TagName}]绑定PLC变量[{tag.PlcConnectionName}:{tag.PlcVariableName}]，采样周期[{tag.AcquisitionCycle}]。");
+                    object hmiConnection = EnsureHmiConnection(hmiConnectionComposition, tag.PlcConnectionName);
+                    object hmiTag = FindByName(hmiTagComposition, tag.TagName) ?? CreateByName(hmiTagComposition, typeof(HmiTag), tag.TagName);
+                    if (hmiTag == null)
+                    {
+                        return $"HMI变量'{tag.TagName}'创建失败，请检查TIA项目中的HMI变量表状态。";
+                    }
+
+                    ApplyHmiTagAttributes(hmiTag, tag, hmiConnection);
+
+                    Log.Information($"HMI变量[{tag.TagName}]已写入，并绑定PLC变量[{tag.PlcConnectionName}:{tag.PlcVariableName}]，采样周期[{tag.AcquisitionCycle}]。");
                     createdOrUpdatedCount++;
                 }
 
-                Log.Information($"HMI变量编辑第一阶段执行完成，完成变量定义及PLC绑定校验，待写入数量：{createdOrUpdatedCount}。");
+                Log.Information($"HMI变量写入完成，变量定义及PLC变量绑定已更新，处理数量：{createdOrUpdatedCount}。");
                 return string.Empty;
             }
             catch (Exception ex)
             {
                 Log.Fatal(ex.Message);
                 return ex.Message;
+            }
+        }
+
+        private static HmiSoftware FindFirstHmiSoftware(Project project)
+        {
+            if (project?.Devices == null)
+            {
+                return null;
+            }
+
+            foreach (Device device in project.Devices)
+            {
+                foreach (DeviceItem deviceItem in EnumerateDeviceItems(device?.Items))
+                {
+                    SoftwareContainer softwareContainer = ((IEngineeringServiceProvider)deviceItem).GetService<SoftwareContainer>();
+                    if (softwareContainer?.Software is HmiSoftware hmiSoftware)
+                    {
+                        return hmiSoftware;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<DeviceItem> EnumerateDeviceItems(DeviceItemComposition rootComposition)
+        {
+            if (rootComposition == null)
+            {
+                yield break;
+            }
+
+            foreach (DeviceItem item in rootComposition)
+            {
+                yield return item;
+                foreach (DeviceItem child in EnumerateDeviceItems(item?.Items))
+                {
+                    yield return child;
+                }
+            }
+        }
+
+        private static IEngineeringComposition GetEngineeringComposition(object owner, string propertyName)
+        {
+            if (owner == null || string.IsNullOrWhiteSpace(propertyName))
+            {
+                return null;
+            }
+
+            var property = owner.GetType().GetProperty(propertyName);
+            return property?.GetValue(owner) as IEngineeringComposition;
+        }
+
+        private static object EnsureHmiConnection(IEngineeringComposition connectionComposition, string connectionName)
+        {
+            if (connectionComposition == null || string.IsNullOrWhiteSpace(connectionName))
+            {
+                return null;
+            }
+
+            object connection = FindByName(connectionComposition, connectionName);
+            if (connection != null)
+            {
+                return connection;
+            }
+
+            return CreateByName(connectionComposition, typeof(HmiConnection), connectionName);
+        }
+
+        private static object FindByName(IEnumerable composition, string name)
+        {
+            if (composition == null || string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
+            foreach (object item in composition)
+            {
+                string itemName = (item as IEngineeringObject)?.GetAttribute("Name")?.ToString();
+                if (string.Equals(itemName, name, StringComparison.OrdinalIgnoreCase))
+                {
+                    return item;
+                }
+            }
+
+            return null;
+        }
+
+        private static object CreateByName(IEngineeringComposition composition, Type itemType, string name)
+        {
+            if (composition == null || itemType == null || string.IsNullOrWhiteSpace(name))
+            {
+                return null;
+            }
+
+            IEnumerable<KeyValuePair<string, object>> parameters = new[]
+            {
+                new KeyValuePair<string, object>("Name", name)
+            };
+
+            return composition.Create(itemType, parameters);
+        }
+
+        private static void ApplyHmiTagAttributes(object hmiTag, HmiTagEditItem item, object connection)
+        {
+            if (!(hmiTag is IEngineeringObject engineeringObject) || item == null)
+            {
+                return;
+            }
+
+            TrySetAttribute(engineeringObject, "Name", item.TagName);
+            TrySetAttribute(engineeringObject, "DataType", item.DataType);
+            TrySetAttribute(engineeringObject, "Address", item.Address);
+            TrySetAttribute(engineeringObject, "AcquisitionCycle", item.AcquisitionCycle);
+
+            // 不同WinCC版本属性名存在差异，逐个尝试常见属性名。
+            TrySetAttribute(engineeringObject, "Connection", connection);
+            TrySetAttribute(engineeringObject, "ConnectionName", item.PlcConnectionName);
+            TrySetAttribute(engineeringObject, "PlcTag", item.PlcVariableName);
+            TrySetAttribute(engineeringObject, "ProcessTag", item.PlcVariableName);
+            TrySetAttribute(engineeringObject, "ProcessValue", item.PlcVariableName);
+        }
+
+        private static void TrySetAttribute(IEngineeringObject engineeringObject, string attributeName, object value)
+        {
+            if (engineeringObject == null || string.IsNullOrWhiteSpace(attributeName) || value == null)
+            {
+                return;
+            }
+
+            try
+            {
+                engineeringObject.SetAttribute(attributeName, value);
+            }
+            catch
+            {
+                // 不同WinCC版本属性集存在差异，忽略无效属性并继续尝试其他属性。
             }
         }
 
