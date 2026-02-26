@@ -77,6 +77,7 @@ namespace TIA程序生成.ViewModels
             _newCheckVersion = checkVersion;
             StartTIAPortalModel = new StartTIAPortalModel();
             StartTIAPortalModel.ModbusInfo = new ObservableCollection<ModbusInfo>();
+            StartTIAPortalModel.HmiTags = new ObservableCollection<HmiTagEditItem>();
             ExecuteCommand = new DelegateCommand<string>(Execute);
             ExecuteDelCommand = new DelegateCommand<object>(ExecuteDel);
             _newTIAPortal = newTIAPortal;
@@ -115,6 +116,9 @@ namespace TIA程序生成.ViewModels
                     case "SelectImportBlockPath": SelectImportBlockPath(); break;
                     case "CreateModbusData": CreateModbusData(); break;
                     case "CleanModbusData": CleanModbusData(); break;
+                    case "AddHmiTagItem": AddHmiTagItem(); break;
+                    case "ClearHmiTagItems": ClearHmiTagItems(); break;
+                    case "CreateOrUpdateHmiTags": CreateOrUpdateHmiTags(); break;
                 }
             }
             else
@@ -335,6 +339,57 @@ namespace TIA程序生成.ViewModels
             }
         }
 
+
+
+        private void AddHmiTagItem()
+        {
+            if (string.IsNullOrWhiteSpace(StartTIAPortalModel.HmiTagName))
+            {
+                dialogHostService.Question("温馨提示", "请填写HMI变量名。");
+                return;
+            }
+
+            StartTIAPortalModel.HmiTags.Add(new HmiTagEditItem
+            {
+                TagName = StartTIAPortalModel.HmiTagName.Trim(),
+                DataType = string.IsNullOrWhiteSpace(StartTIAPortalModel.HmiTagDataType) ? "Bool" : StartTIAPortalModel.HmiTagDataType.Trim(),
+                Address = StartTIAPortalModel.HmiTagAddress?.Trim(),
+                AcquisitionCycle = string.IsNullOrWhiteSpace(StartTIAPortalModel.HmiAcquisitionCycle) ? "100 ms" : StartTIAPortalModel.HmiAcquisitionCycle.Trim()
+            });
+
+            StartTIAPortalModel.HmiTagName = string.Empty;
+            StartTIAPortalModel.HmiTagAddress = string.Empty;
+        }
+
+        private async void CreateOrUpdateHmiTags()
+        {
+            if (StartTIAPortalModel.HmiTags == null || StartTIAPortalModel.HmiTags.Count == 0)
+            {
+                var dialogResult1 = dialogHostService.Question("温馨提示", "请先添加至少一个HMI变量。");
+                return;
+            }
+
+            UpdateLoading(true);
+            string message = string.Empty;
+            await Task.Run(() =>
+            {
+                message = _newTIAPortal.CreateOrUpdateHmiTags(StartTIAPortalModel.HmiTags);
+            });
+            UpdateLoading(false);
+
+            if (!string.IsNullOrWhiteSpace(message))
+            {
+                dialogHostService.Question("温馨提示", message);
+                return;
+            }
+
+            dialogHostService.Question("提示", $"HMI变量编辑第一阶段已执行，共处理 {StartTIAPortalModel.HmiTags.Count} 条。");
+        }
+
+        private void ClearHmiTagItems()
+        {
+            StartTIAPortalModel.HmiTags?.Clear();
+        }
         private async void ImportPrograms1()
         {
             var dialogResult = await dialogHostService.Question("温馨提示", $"确定要生成Modbus程序吗？");
