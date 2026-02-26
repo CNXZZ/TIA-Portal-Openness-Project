@@ -186,6 +186,7 @@
     <Compile Include="Common\Event\Link.cs" />
     <Compile Include="Common\Interfaces\CheckVersion.cs" />
     <Compile Include="Common\Models\Configurations\Configuration.cs" />
+    <Compile Include="Common\Models\HmiTagEditItem.cs" />
     <Compile Include="Common\Models\LogsModel.cs" />
     <Compile Include="Common\Models\MenuBar.cs" />
     <Compile Include="Common\Models\StartModel.cs" />
