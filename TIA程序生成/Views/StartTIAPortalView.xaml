@@ -481,6 +481,12 @@
                                     <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="采样周期：" />
                                     <TextBox Width="90" Margin="8,0,0,0" Text="{Binding StartTIAPortalModel.HmiAcquisitionCycle}" />
                                 </DockPanel>
+                                <DockPanel Margin="5" LastChildFill="False">
+                                    <TextBlock VerticalAlignment="Center" FontWeight="Bold" Text="PLC连接：" />
+                                    <TextBox Width="130" Margin="8,0,0,0" Text="{Binding StartTIAPortalModel.HmiPlcConnectionName}" />
+                                    <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="Bold" Text="PLC变量：" />
+                                    <TextBox Width="180" Margin="8,0,0,0" Text="{Binding StartTIAPortalModel.HmiPlcVariableName}" />
+                                </DockPanel>
                                 <WrapPanel Margin="5">
                                     <Button Margin="0,0,8,0" Command="{Binding ExecuteCommand}" CommandParameter="AddHmiTagItem" Content="添加到列表" />
                                     <Button Margin="0,0,8,0" Command="{Binding ExecuteCommand}" CommandParameter="CreateOrUpdateHmiTags" Content="执行变量编辑" />
@@ -497,6 +503,8 @@
                                         <DataGridTextColumn Binding="{Binding DataType}" Header="数据类型" Width="90" />
                                         <DataGridTextColumn Binding="{Binding Address}" Header="地址" Width="120" />
                                         <DataGridTextColumn Binding="{Binding AcquisitionCycle}" Header="采样周期" Width="90" />
+                                        <DataGridTextColumn Binding="{Binding PlcConnectionName}" Header="PLC连接" Width="120" />
+                                        <DataGridTextColumn Binding="{Binding PlcVariableName}" Header="PLC变量绑定" Width="180" />
                                     </DataGrid.Columns>
                                 </DataGrid>
                             </StackPanel>

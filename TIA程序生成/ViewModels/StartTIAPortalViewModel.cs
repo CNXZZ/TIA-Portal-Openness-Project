@@ -78,6 +78,7 @@ namespace TIA程序生成.ViewModels
             StartTIAPortalModel = new StartTIAPortalModel();
             StartTIAPortalModel.ModbusInfo = new ObservableCollection<ModbusInfo>();
             StartTIAPortalModel.HmiTags = new ObservableCollection<HmiTagEditItem>();
+            StartTIAPortalModel.HmiPlcConnectionName = "PLC_1";
             ExecuteCommand = new DelegateCommand<string>(Execute);
             ExecuteDelCommand = new DelegateCommand<object>(ExecuteDel);
             _newTIAPortal = newTIAPortal;
@@ -349,16 +350,31 @@ namespace TIA程序生成.ViewModels
                 return;
             }
 
+            if (string.IsNullOrWhiteSpace(StartTIAPortalModel.HmiPlcConnectionName) || string.IsNullOrWhiteSpace(StartTIAPortalModel.HmiPlcVariableName))
+            {
+                dialogHostService.Question("温馨提示", "请填写PLC连接名称和PLC变量名，用于绑定。");
+                return;
+            }
+
+            if (StartTIAPortalModel.HmiTags.Any(x => string.Equals(x.TagName, StartTIAPortalModel.HmiTagName.Trim(), StringComparison.OrdinalIgnoreCase)))
+            {
+                dialogHostService.Question("温馨提示", "HMI变量名重复，请修改后再添加。");
+                return;
+            }
+
             StartTIAPortalModel.HmiTags.Add(new HmiTagEditItem
             {
                 TagName = StartTIAPortalModel.HmiTagName.Trim(),
                 DataType = string.IsNullOrWhiteSpace(StartTIAPortalModel.HmiTagDataType) ? "Bool" : StartTIAPortalModel.HmiTagDataType.Trim(),
                 Address = StartTIAPortalModel.HmiTagAddress?.Trim(),
-                AcquisitionCycle = string.IsNullOrWhiteSpace(StartTIAPortalModel.HmiAcquisitionCycle) ? "100 ms" : StartTIAPortalModel.HmiAcquisitionCycle.Trim()
+                AcquisitionCycle = string.IsNullOrWhiteSpace(StartTIAPortalModel.HmiAcquisitionCycle) ? "100 ms" : StartTIAPortalModel.HmiAcquisitionCycle.Trim(),
+                PlcConnectionName = StartTIAPortalModel.HmiPlcConnectionName.Trim(),
+                PlcVariableName = StartTIAPortalModel.HmiPlcVariableName.Trim()
             });
 
             StartTIAPortalModel.HmiTagName = string.Empty;
             StartTIAPortalModel.HmiTagAddress = string.Empty;
+            StartTIAPortalModel.HmiPlcVariableName = string.Empty;
         }
 
         private async void CreateOrUpdateHmiTags()
@@ -383,7 +399,7 @@ namespace TIA程序生成.ViewModels
                 return;
             }
 
-            dialogHostService.Question("提示", $"HMI变量编辑第一阶段已执行，共处理 {StartTIAPortalModel.HmiTags.Count} 条。");
+            dialogHostService.Question("提示", $"HMI变量定义及PLC变量绑定已执行，共处理 {StartTIAPortalModel.HmiTags.Count} 条。");
         }
 
         private void ClearHmiTagItems()

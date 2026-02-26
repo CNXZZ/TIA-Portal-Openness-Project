@@ -244,5 +244,20 @@ namespace TIA程序生成.Common.Models
             get { return hmiAcquisitionCycle; }
             set { hmiAcquisitionCycle = value; OnPropertyChanged(); }
         }
+
+
+        private string hmiPlcConnectionName;
+        public string HmiPlcConnectionName
+        {
+            get { return hmiPlcConnectionName; }
+            set { hmiPlcConnectionName = value; OnPropertyChanged(); }
+        }
+
+        private string hmiPlcVariableName;
+        public string HmiPlcVariableName
+        {
+            get { return hmiPlcVariableName; }
+            set { hmiPlcVariableName = value; OnPropertyChanged(); }
+        }
     }
 }

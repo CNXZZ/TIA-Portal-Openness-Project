@@ -31,5 +31,20 @@ namespace TIA程序生成.Common.Models
             get { return acquisitionCycle; }
             set { acquisitionCycle = value; OnPropertyChanged(); }
         }
+
+
+        private string plcConnectionName;
+        public string PlcConnectionName
+        {
+            get { return plcConnectionName; }
+            set { plcConnectionName = value; OnPropertyChanged(); }
+        }
+
+        private string plcVariableName;
+        public string PlcVariableName
+        {
+            get { return plcVariableName; }
+            set { plcVariableName = value; OnPropertyChanged(); }
+        }
     }
 }
