@@ -574,5 +574,67 @@ namespace TIA程序生成.Common.Interfaces
 
 
         }
+
+        /// <summary>
+        /// 第一阶段：创建/更新HMI变量（基础版）。
+        /// </summary>
+        public string CreateOrUpdateHmiTags(IEnumerable<HmiTagEditItem> tags)
+        {
+            if (projectTIA == null)
+            {
+                return "请先连接TIA项目。";
+            }
+
+            if (tags == null)
+            {
+                return "HMI变量列表为空。";
+            }
+
+            var validTags = tags.Where(t => t != null && !string.IsNullOrWhiteSpace(t.TagName)).ToList();
+            if (validTags.Count == 0)
+            {
+                return "请先填写至少一个HMI变量名称。";
+            }
+
+            try
+            {
+                int createdOrUpdatedCount = 0;
+                foreach (var tag in validTags)
+                {
+                    // 当前阶段先完成参数校验和任务编排，后续可在这里接入具体HMI设备对象。
+                    if (tag.TagName.Any(char.IsWhiteSpace))
+                    {
+                        return $"HMI变量名'{tag.TagName}'包含空白字符，请修改后重试。";
+                    }
+
+                    if (string.IsNullOrWhiteSpace(tag.PlcConnectionName))
+                    {
+                        return $"HMI变量'{tag.TagName}'未填写PLC连接名称。";
+                    }
+
+                    if (string.IsNullOrWhiteSpace(tag.PlcVariableName))
+                    {
+                        return $"HMI变量'{tag.TagName}'未填写PLC变量名。";
+                    }
+
+                    if (!tag.PlcVariableName.Contains("."))
+                    {
+                        return $"HMI变量'{tag.TagName}'绑定PLC变量格式不正确，示例：DB1.StartCmd。";
+                    }
+
+                    Log.Information($"HMI变量[{tag.TagName}]绑定PLC变量[{tag.PlcConnectionName}:{tag.PlcVariableName}]，采样周期[{tag.AcquisitionCycle}]。");
+                    createdOrUpdatedCount++;
+                }
+
+                Log.Information($"HMI变量编辑第一阶段执行完成，完成变量定义及PLC绑定校验，待写入数量：{createdOrUpdatedCount}。");
+                return string.Empty;
+            }
+            catch (Exception ex)
+            {
+                Log.Fatal(ex.Message);
+                return ex.Message;
+            }
+        }
+
     }
 }
